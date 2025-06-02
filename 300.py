@@ -175,9 +175,11 @@ def handle_message(event):
             new_reply = convert_to_real_estate_template(gpt_answer)
         else:
             new_reply = gpt_answer
+            
+        user_id = event.source.user_id
         
         line_bot_api.push_message(
-            event.reply_token,
+            to=user_id,
             TextSendMessage(text=gpt_answer)
         )
 

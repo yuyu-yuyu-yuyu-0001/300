@@ -176,7 +176,6 @@ def handle_message(event):
         else:
             new_reply = gpt_answer
             
-        user_id = event.source.user_id
         
         line_bot_api.push_message(
             to=user_id,

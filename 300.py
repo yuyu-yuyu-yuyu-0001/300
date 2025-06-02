@@ -167,7 +167,7 @@ def handle_message(event):
                 {"role": "user", "content":  modified_message}
             ],
             temperature=0.98,
-            max_tokens=200
+            max_tokens=100
         )
         gpt_answer = response.choices[0].message["content"].strip()
 

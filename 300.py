@@ -176,7 +176,7 @@ def handle_message(event):
         else:
             new_reply = gpt_answer
         
-        line_bot_api.reply_message(
+        line_bot_api.push_message(
             event.reply_token,
             TextSendMessage(text=gpt_answer)
         )

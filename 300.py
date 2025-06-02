@@ -177,8 +177,8 @@ def handle_message(event):
             new_reply = gpt_answer
             
         
-        line_bot_api.push_message(
-            to=user_id,
+        line_bot_api.reply_message(
+            event.reply_token,
             TextSendMessage(text=gpt_answer)
         )
 

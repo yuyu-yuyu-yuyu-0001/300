@@ -175,18 +175,34 @@ def handle_message(event):
             new_reply = convert_to_real_estate_template(gpt_answer)
         else:
             new_reply = gpt_answer
-            
+
         
         line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text=gpt_answer)
+            TextSendMessage(text='回覆訊息')
+        )
+        
+
+        
+        line_bot_api.push_message(
+            event.source.user_id,
+            TextSendMessage(text="這是延遲回應")
         )
 
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text=gpt_answer)
+        )        
+        
         print(f"[GPT 回覆] {gpt_answer}")
 
     except Exception as e:
         print("剛剛小忙一下，沒注意哥哥您剛剛說了什麼?可以再說一次嗎??哥哥")
         traceback.print_exc()
+        line_bot_api.push_message(
+            event.source.user_id,
+            TextSendMessage(text='抱歉，回覆超時，我用 push 傳這則訊息給你')
+        )
 
 
 if __name__ == "__main__":

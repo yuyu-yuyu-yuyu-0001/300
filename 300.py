@@ -178,18 +178,12 @@ def handle_message(event):
 
         
 
-     
-
-        
         line_bot_api.push_message(
             event.source.user_id,
-            TextSendMessage(text="這是延遲回應")
-        )
-
-        line_bot_api.reply_message(
-            event.reply_token,
             TextSendMessage(text=new_reply)
-        )        
+        )     
+
+     
         
         print(f"[GPT 回覆] {gpt_answer}")
 

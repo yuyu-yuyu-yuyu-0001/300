@@ -14,7 +14,7 @@ openai.api_base = 'https://free.v36.cm/v1'  # 自訂 API server URL
 
 
 # LINE 設定
-CHANNEL_SECRET = 'bd1f67e47488ef7d287541cfb175e6ec'
+CHANNEL_SECRET = '74630b154d9d0cf1823c5c32db2bcf4f'
 CHANNEL_ACCESS_TOKEN = 'iqYgdqANm0V1UVbC+0jYZqXQNATimJvJRU+esv0RR5TlngqFDmytCT3aVyiyW3mj2BZBoRK6UYoAY8Y2D1L2iVizgzRwU3Q2QblOcdFlf58fK70AZIJ+TtCyb+zvjlwHcEn0TubFwY851pNcJVOEiwdB04t89/1O/w1cDnyilFU='
 
 

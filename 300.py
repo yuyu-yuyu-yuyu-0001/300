@@ -8,12 +8,12 @@ import os
 import random 
 import firebase_admin
 from firebase_admin import credentials, firestore
-
+from datetime import datetime
 
 cred = credentials.Certificate("firebase-key.json")
 firebase_admin.initialize_app(cred)
 db = firestore.client()
-user_collection = db.collection('line_users')
+
 
 
 # GPT API Key 設定（openai 0.28.1 寫法）
@@ -197,6 +197,16 @@ def handle_message(event):
      
         
         print(f"[GPT 回覆] {gpt_answer}")
+
+
+        user_id = event.source.user_id
+        user_doc = db.collection("line_users").document(user_id)
+        if not user_doc.get().exists:
+           user_doc.set({
+             "user_id": user_id,
+             "joined": firestore.SERVER_TIMESTAMP
+           })
+    
 
     except Exception as e:
         print("剛剛小忙一下，沒注意哥哥您剛剛說了什麼?可以再說一次嗎??哥哥")

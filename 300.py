@@ -6,6 +6,8 @@ import openai
 import traceback
 import os
 import random 
+import firebase_admin
+from firebase_admin import credentials, firestore
 
 
 # GPT API Key 設定（openai 0.28.1 寫法）

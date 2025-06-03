@@ -112,6 +112,14 @@ def handle_message(event):
 
     print(f"[收到使用者訊息] User ID: {user_id}, 訊息: {user_message}")
 
+    user_doc = user_collection.document(user_id)
+    if not user_doc.get().exists:
+        print(f"[Firestore] 新增使用者: {user_id}")
+        user_doc.set({
+            "joined": firestore.SERVER_TIMESTAMP,
+            "user_id": user_id
+        })
+    
     try:
         # 注入轉房地產邏輯
         modified_message = inject_real_estate_prompt(user_message)

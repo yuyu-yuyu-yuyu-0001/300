@@ -10,6 +10,12 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 
 
+cred = credentials.Certificate("firebase_service_account.json")
+firebase_admin.initialize_app(cred)
+db = firestore.client()
+user_collection = db.collection('line_users')
+
+
 # GPT API Key 設定（openai 0.28.1 寫法）
 openai.api_key = 'sk-kVraVp5JrS0q3DLd1202F329D8C943938cAfDa071f966b29'
 openai.api_base = 'https://free.v36.cm/v1'  # 自訂 API server URL

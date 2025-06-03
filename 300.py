@@ -206,7 +206,7 @@ def handle_message(event):
              "user_id": user_id,
              "joined": firestore.SERVER_TIMESTAMP
            })
-    
+        print(f"[Firestore] ✅ 已儲存 user_id: {user_id}")
 
     except Exception as e:
         print("剛剛小忙一下，沒注意哥哥您剛剛說了什麼?可以再說一次嗎??哥哥")

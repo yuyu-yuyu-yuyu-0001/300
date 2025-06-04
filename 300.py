@@ -42,7 +42,7 @@ def save_user_id(user_id):
         if not user_ref.get().exists:
             user_ref.set({
                 'user_id': user_id,
-                'created_at': firestore.SERVER_TIMESTAMP
+
             })
             print(f"[Firestore] ✅ 已儲存 user_id: {user_id}")
         else:

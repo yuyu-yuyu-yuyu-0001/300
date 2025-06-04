@@ -213,12 +213,12 @@ def handle_message(event):
         )     
 
      
-        
+        save_user_id(user_id)
         print(f"[GPT 回覆] {gpt_answer}")
 
 
-        user_id = event.source.user_id
-        save_user_id(user_id)
+
+
 
     except Exception as e:
         print("剛剛小忙一下，沒注意哥哥您剛剛說了什麼?可以再說一次嗎??哥哥")

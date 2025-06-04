@@ -222,8 +222,9 @@ def handle_message(event):
         )     
 
         user_id = event.source.user_id
-        save_user_id(user_id)
+        print(f"[收到使用者訊息] User ID: {user_id}")    
         print(f"[GPT 回覆] {gpt_answer}")
+        save_user_id(user_id)
 
 
 

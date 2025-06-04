@@ -10,8 +10,10 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from datetime import datetime
 
-cred = credentials.Certificate("firebase-key.json")
-firebase_admin.initialize_app(cred)
+if not firebase_admin._apps:
+    cred = credentials.Certificate("firebase-key.json")  # 確保此檔案在你的專案資料夾中
+    firebase_admin.initialize_app(cred)
+    
 db = firestore.client()
 
 
@@ -32,6 +34,22 @@ handler = WebhookHandler(CHANNEL_SECRET)
 
 
 app = Flask(__name__)
+
+
+def save_user_id(user_id):
+    try:
+        user_ref = db.collection('line_users').document(user_id)
+        if not user_ref.get().exists:
+            user_ref.set({
+                'user_id': user_id,
+                'created_at': firestore.SERVER_TIMESTAMP
+            })
+            print(f"[Firestore] ✅ 已儲存 user_id: {user_id}")
+        else:
+            print(f"[Firestore] ℹ️ user_id 已存在: {user_id}")
+    except Exception as e:
+        print(f"[Firestore ❌ 錯誤] {e}")
+
 
 def is_search_style_response(text: str) -> bool:
     return '[{"title":' in text or text.strip().startswith('[{"title":')
@@ -200,13 +218,7 @@ def handle_message(event):
 
 
         user_id = event.source.user_id
-        user_doc = db.collection("line_users").document(user_id)
-        if not user_doc.get().exists:
-           user_doc.set({
-             "user_id": user_id,
-             "joined": firestore.SERVER_TIMESTAMP
-           })
-           print(f"[Firestore] ✅ 已儲存 user_id: {user_id}")
+        save_user_id(user_id)
 
     except Exception as e:
         print("剛剛小忙一下，沒注意哥哥您剛剛說了什麼?可以再說一次嗎??哥哥")

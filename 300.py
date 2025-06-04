@@ -212,7 +212,7 @@ def handle_message(event):
             TextSendMessage(text=gpt_answer)
         )     
 
-     
+        user_id = "U1234567890a88888888888"  # 測試用範例
         save_user_id(user_id)
         print(f"[GPT 回覆] {gpt_answer}")
 

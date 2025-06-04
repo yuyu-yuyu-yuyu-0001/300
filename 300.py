@@ -5,13 +5,22 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage
 import openai
 import traceback
 import os
+import json
 import random 
 import firebase_admin
 from firebase_admin import credentials, firestore
 from datetime import datetime
 
+
+firebase_key_json = os.environ.get("FIREBASE_CREDENTIALS")
+if not firebase_key_json:
+    raise ValueError("❌ 環境變數 'FIREBASE_CREDENTIALS' 沒有設定")
+
+cred_dict = json.loads(firebase_key_json)
+
+
 if not firebase_admin._apps:
-    cred = credentials.Certificate("firebase-key.json")  # 確保此檔案在你的專案資料夾中
+    cred = credentials.Certificate(cred_dict)  # 確保此檔案在你的專案資料夾中
     firebase_admin.initialize_app(cred)
     
 db = firestore.client()

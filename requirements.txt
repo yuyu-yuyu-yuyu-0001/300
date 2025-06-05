@@ -6,6 +6,7 @@ MarkupSafe>=2.1.1
 gunicorn==20.1.0
 firebase-admin==6.5.0
 mega.py==1.0.8
+tenacity==6.3.1
 
 
 

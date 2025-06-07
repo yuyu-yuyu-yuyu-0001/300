@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: 300
+    env: python
+    runtime: python-3.10.12
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -b 0.0.0.0:$PORT 300:app
+    region: frankfurt
+    plan: free
+    branch: main
+    repo: https://github.com/yuyu-yuyu-yuyu-0001/300
+    buildFilter:
+      paths:
+        - requirements.txt
+        - 300.py
+        - runtime.txt

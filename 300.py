@@ -68,16 +68,26 @@ def save_to_mega(user_id, user_message, ai_reply):
         m = mega.login(MEGA_EMAIL, MEGA_PASSWORD)
 
         filename = f"{user_id}.txt"
-        filepath = f"/A/{filename}"
+        tmp_dir = "/A"
+        filepath = os.path.join(tmp_dir, filename)
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+        os.makedirs(tmp_dir, exist_ok=True)
+        
+        file_list = m.find(filename)
+
         # 讀取原檔案內容（如果存在於 MEGA）
-        try:
-            file_list = m.find(filename)
-            if file_list:
-                m.download(file_list[0], dest_path="/A")
-        except Exception as e:
-            print(f"[MEGA ⚠️] 無法下載原始檔案：{e}")
+        if file_list:
+            try:
+                download_path = m.download(file_list[0], dest_path=tmp_dir)
+                if not os.path.exists(download_path):
+                    print(f"[MEGA ⚠️] 檔案下載失敗：{download_path}")
+            except Exception as e:
+                print(f"[MEGA ⚠️] 無法下載原始檔案：{e}")
+        else:
+            # 若檔案不存在，建立空檔案
+            with open(filepath, "w", encoding="utf-8") as f:
+                f.write("")
 
         # 寫入新訊息到本地檔案（追加）
         with open(filepath, "a", encoding="utf-8") as f:
@@ -92,11 +102,11 @@ def save_to_mega(user_id, user_message, ai_reply):
             folder = m.create_folder("LINE_對話紀錄")
 
         # 刪除舊檔（避免重複）
-        try:
-            if file_list:
+        if file_list:
+            try:
                 m.delete(file_list[0])
-        except Exception as e:
-            print(f"[MEGA ⚠️] 無法刪除原始檔案：{e}")
+            except Exception as e:
+                print(f"[MEGA ⚠️] 無法刪除原始檔案：{e}")
 
         m.upload(filepath, folder[0])
         print(f"[MEGA ✅] 對話已儲存：{filename}")

@@ -45,6 +45,8 @@ handler = WebhookHandler(CHANNEL_SECRET)
 
 app = Flask(__name__)
 
+MEGA_EMAIL = os.environ.get("MEGA_EMAIL")
+MEGA_PASSWORD = os.environ.get("MEGA_PASSWORD")
 
 def save_user_id(user_id):
     try:
@@ -59,6 +61,50 @@ def save_user_id(user_id):
             print(f"[Firestore] ℹ️ user_id 已存在: {user_id}")
     except Exception as e:
         print(f"[Firestore ❌ 錯誤] {e}")
+
+def save_to_mega(user_id, user_message, ai_reply):
+    try:
+        mega = Mega()
+        m = mega.login(MEGA_EMAIL, MEGA_PASSWORD)
+
+        filename = f"{user_id}.txt"
+        filepath = f"/tmp/{filename}"
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        # 讀取原檔案內容（如果存在於 MEGA）
+        try:
+            file_list = m.find(filename)
+            if file_list:
+                m.download(file_list[0], dest_path="/tmp")
+        except Exception as e:
+            print(f"[MEGA ⚠️] 無法下載原始檔案：{e}")
+
+        # 寫入新訊息到本地檔案（追加）
+        with open(filepath, "a", encoding="utf-8") as f:
+            f.write(f"\n===== {timestamp} =====\n")
+            f.write(f"👤 USER_ID: {user_id}\n")
+            f.write(f"🧍 使用者：{user_message}\n")
+            f.write(f"🤖 AI 回覆：{ai_reply}\n")
+
+        # 上傳覆蓋檔案到 MEGA
+        folder = m.find("LINE_對話紀錄")
+        if not folder:
+            folder = m.create_folder("LINE_對話紀錄")
+
+        # 刪除舊檔（避免重複）
+        try:
+            if file_list:
+                m.delete(file_list[0])
+        except Exception as e:
+            print(f"[MEGA ⚠️] 無法刪除原始檔案：{e}")
+
+        m.upload(filepath, folder[0])
+        print(f"[MEGA ✅] 對話已儲存：{filename}")
+        os.remove(filepath)
+
+    except Exception as e:
+        print(f"[MEGA ❌ 錯誤] {e}")
+
 
 
 def is_search_style_response(text: str) -> bool:
@@ -226,7 +272,7 @@ def handle_message(event):
         print(f"[收到使用者訊息] User ID: {user_id}")    
         print(f"[GPT 回覆] {gpt_answer}")
         save_user_id(user_id)
-
+        save_to_mega(user_id, user_message, ai_reply)
 
 
 

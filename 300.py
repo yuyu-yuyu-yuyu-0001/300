@@ -68,7 +68,7 @@ def save_to_mega(user_id, user_message, ai_reply):
         m = mega.login(MEGA_EMAIL, MEGA_PASSWORD)
 
         filename = f"{user_id}.txt"
-        tmp_dir = "/A"
+        tmp_dir = os.path.join(os.getcwd(), "A")
         filepath = os.path.join(tmp_dir, filename)
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 

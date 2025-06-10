@@ -68,14 +68,14 @@ def save_to_mega(user_id, user_message, ai_reply):
         m = mega.login(MEGA_EMAIL, MEGA_PASSWORD)
 
         filename = f"{user_id}.txt"
-        filepath = f"/tmp/{filename}"
+        filepath = f"/A/{filename}"
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         # 讀取原檔案內容（如果存在於 MEGA）
         try:
             file_list = m.find(filename)
             if file_list:
-                m.download(file_list[0], dest_path="/tmp")
+                m.download(file_list[0], dest_path="/A")
         except Exception as e:
             print(f"[MEGA ⚠️] 無法下載原始檔案：{e}")
 

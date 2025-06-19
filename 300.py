@@ -18,7 +18,7 @@ from langchain.schema import Document
 import pdfplumber
 from langchain.chains import RetrievalQA
 from langchain.llms import OpenAI
-from langchain.schema import Document
+
 
 
 firebase_key_json = os.environ.get("FIREBASE_CREDENTIALS")

@@ -14,7 +14,8 @@ from mega import Mega
 from langchain.vectorstores import FAISS
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.document_loaders import PyPDFLoader
+from langchain.schema import Document
+import pdfplumber
 from langchain.chains import RetrievalQA
 from langchain.llms import OpenAI
 from langchain.schema import Document

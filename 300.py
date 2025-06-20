@@ -16,6 +16,7 @@ import pdfplumber
 
 
 
+
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
@@ -81,8 +82,14 @@ def ask_gpt_with_context(query: str, vectorstore: FAISS) -> str:
 
 print("🔍 建立向量資料庫...")
 embeddings = load_embedding_model()
-vectorstore = FAISS.load_local("/index.faiss", embeddings)
+print("📂 目前目錄檔案：", os.listdir())
 
+if os.path.exists("my_faiss_index/index.faiss"):
+    print("📂 目前目錄檔案：", os.listdir())
+    vectorstore = FAISS.load_local("my_faiss_index", embeddings)
+    print("📂 目前目錄檔案：", os.listdir())
+else:
+    raise FileNotFoundError("❌ 沒有找到 FAISS 向量資料庫！請先執行 save_local()")
 
 app = Flask(__name__)
 

@@ -77,16 +77,11 @@ def ask_gpt_with_context(query: str, vectorstore: FAISS) -> str:
     )
     return response["choices"][0]["message"]["content"].strip()
 
-# === STEP 6: 載入向量資料庫一次就好 ===
-print("📄 載入知識文件...")
-docs = load_documents("00.pdf")
 
-print("✂️ 分割文件...")
-chunks = split_documents(docs)
 
 print("🔍 建立向量資料庫...")
 embeddings = load_embedding_model()
-vectorstore = create_vectorstore(chunks, embeddings)
+vectorstore = FAISS.load_local("my_faiss_index", embeddings)
 
 
 app = Flask(__name__)

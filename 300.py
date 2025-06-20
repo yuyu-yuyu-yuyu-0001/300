@@ -11,7 +11,7 @@ from datetime import datetime
 from langchain.vectorstores import FAISS
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.docstore.document import Document 
+from langchain.schema import Document 
 import pdfplumber
 import faiss
 import pickle
@@ -36,37 +36,16 @@ CHANNEL_ACCESS_TOKEN = 'iqYgdqANm0V1UVbC+0jYZqXQNATimJvJRU+esv0RR5TlngqFDmytCT3a
 line_bot_api = LineBotApi(CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(CHANNEL_SECRET)
 
-index = faiss.read_index("my_faiss_index/index.faiss")
 
-with open("my_faiss_index/index.pkl", "rb") as f:
-    stored_data = pickle.load(f)
 
 def load_embedding_model():
     return HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
-# === STEP 2: 讀取 PDF 檔 ===
-def load_documents(filepath: str):
-    documents = []
-    with pdfplumber.open(filepath) as pdf:
-        for i, page in enumerate(pdf.pages):
-            text = page.extract_text()
-            if text:
-                documents.append(Document(page_content=text, metadata={"page": i + 1}))
-    return documents
 
-# === STEP 3: 切割文件 ===
-def split_documents(docs):
-    splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-    texts = []
-    for doc in docs:
-        chunks = splitter.split_text(doc.page_content)
-        for chunk in chunks:
-            texts.append(Document(page_content=chunk, metadata=doc.metadata))
-    return texts
 
-# === STEP 4: 建立向量資料庫 ===
-def create_vectorstore(chunks, embedding_model):
-    return FAISS.from_documents(chunks, embedding_model)
+
+
+
 
 # === STEP 5: 問答階段：查詢 FAISS 並餵給 GPT ===
 def ask_gpt_with_context(query: str, vectorstore: FAISS) -> str:
@@ -87,6 +66,10 @@ def ask_gpt_with_context(query: str, vectorstore: FAISS) -> str:
     return response["choices"][0]["message"]["content"].strip()
 
 
+index = faiss.read_index("my_faiss_index/index.faiss")
+
+with open("my_faiss_index/index.pkl", "rb") as f:
+    stored_data = pickle.load(f)
 
 print("🔍 建立向量資料庫...")
 embeddings = load_embedding_model()

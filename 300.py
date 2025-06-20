@@ -16,7 +16,7 @@ import pdfplumber
 
 
 
-
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
 # GPT API Key 設定（openai 0.28.1 寫法）

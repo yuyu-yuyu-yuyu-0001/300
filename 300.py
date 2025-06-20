@@ -8,17 +8,16 @@ import os
 import json
 import random 
 from datetime import datetime
-from langchain.vectorstores.faiss import FAISS
+from langchain.vectorstores import FAISS
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.docstore.document import Document 
 import pdfplumber
 import faiss
 import pickle
-import sys
-import types
 
-sys.modules['langchain.schema.document'] = types.SimpleNamespace()
+
+
 
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"

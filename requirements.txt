@@ -9,8 +9,8 @@ tenacity==5.1.5
 mega.py==1.0.8
 langchain==0.0.69
 faiss-cpu
-sentence-transformers
-pdfplumber
+sentence-transformers==2.2.2
+pdfplumber==0.10.2
 
 
 

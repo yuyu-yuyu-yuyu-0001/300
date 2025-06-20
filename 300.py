@@ -36,7 +36,7 @@ handler = WebhookHandler(CHANNEL_SECRET)
 
 
 def load_embedding_model():
-    return HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2"")
+    return HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
 # === STEP 2: 讀取 PDF 檔 ===
 def load_documents(filepath: str):

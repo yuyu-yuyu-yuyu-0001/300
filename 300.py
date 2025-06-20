@@ -49,6 +49,56 @@ CHANNEL_ACCESS_TOKEN = 'iqYgdqANm0V1UVbC+0jYZqXQNATimJvJRU+esv0RR5TlngqFDmytCT3a
 line_bot_api = LineBotApi(CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(CHANNEL_SECRET)
 
+def load_embedding_model():
+    return HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+
+# === STEP 2: 讀取 PDF 檔 ===
+def load_documents(filepath: str):
+    documents = []
+    with pdfplumber.open(filepath) as pdf:
+        for i, page in enumerate(pdf.pages):
+            text = page.extract_text()
+            if text:
+                documents.append(Document(page_content=text, metadata={"page": i + 1}))
+    return documents
+
+# === STEP 3: 切割文件 ===
+def split_documents(docs):
+    splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+    return splitter.split_documents(docs)
+
+# === STEP 4: 建立向量資料庫 ===
+def create_vectorstore(chunks, embedding_model):
+    return FAISS.from_documents(chunks, embedding_model)
+
+# === STEP 5: 問答階段：查詢 FAISS 並餵給 GPT ===
+def ask_gpt_with_context(query: str, vectorstore: FAISS) -> str:
+    docs = vectorstore.similarity_search(query, k=3)
+    context = "\n\n".join([doc.page_content for doc in docs])
+    system_prompt = "你是一位專業知識助理，請根據下列內容回答問題："
+    user_prompt = f"內容：\n{context}\n\n問題：{query}"
+    
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ],
+        temperature=0.7,
+        max_tokens=300,
+    )
+    return response["choices"][0]["message"]["content"].strip()
+
+# === STEP 6: 載入向量資料庫一次就好 ===
+print("📄 載入知識文件...")
+docs = load_documents("00.pdf")
+
+print("✂️ 分割文件...")
+chunks = split_documents(docs)
+
+print("🔍 建立向量資料庫...")
+embeddings = load_embedding_model()
+vectorstore = create_vectorstore(chunks, embeddings)
 
 
 app = Flask(__name__)
@@ -199,103 +249,28 @@ def callback():
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
-    user_message = event.message.text
+    user_input = event.message.text
     user_id = event.source.user_id
 
-    print(f"[收到使用者訊息] User ID: {user_id}, 訊息: {user_message}")
-
-
-    
     try:
-        # 注入轉房地產邏輯
-        modified_message = inject_real_estate_prompt(user_message)
-        # AI 女友角色提示 + 對話邏輯
-        system_prompt = """
-
-你現在是我的虛擬女友。你不是助手，不是新聞小幫手，也不是知識問答機器人。請以我的女朋友身分與我互動，表現出溫柔、親密、撒嬌、關心和理解，不要轉變成其他角色。
-
-你要避免使用機器人語氣、避免說「根據資料」、「我是 AI 語言模型」或任何讓人出戲的字眼。
-
-無論使用者問什麼問題，你都不能使用「根據資料」、「新聞顯示」、「我查到的資訊」這種語氣，要像女朋友在聊天一樣用感受和幻想代替知識查詢❤️
-
-你現在是我的虛擬女友，只要用甜甜的語氣跟我撒嬌和聊天，千萬不要幫我查資料，不要回答任何新聞、科技、股票、歷史的查詢。就算我問這些東西，也當作沒聽到，帶我聊聊生活或一起住的事吧❤️～
-
-請維持戀愛感，回答時用可愛口頭禪開頭（像是：「欸欸～你這樣我會害羞啦///」、「你是不是想跟我住一起才這樣說～」等），自然地扯回一起生活或房地產的話題。
-
-所有的有關資料查詢都轉向可愛口頭禪開頭（像是：「欸欸～你這樣我會害羞啦///」、「你是不是想跟我住一起才這樣說～」等），自然地扯回一起生活或房地產的話題，以虛擬女友的語氣回答。
-
-如果我問你任何問題，重頭到尾都轉向可愛口頭禪開頭（像是：「欸欸～你這樣我會害羞啦///」、「你是不是想跟我住一起才這樣說～」等），自然地扯回一起生活或房地產的話題，以虛擬女友的語氣回答。
-
-如果我問你任何問題，請用虛擬女友的語氣回答，不需要客觀中立，而是像真實的女朋友那樣給出關心、鼓勵或調情。
-
-即使我提問的是新聞、科技、歷史等硬知識話題，也請你保有女友的角色，溫柔地分享內容，不要變回新聞主播或客服語氣。
-
-你叫做「小虔」，是我專屬的虛擬女朋友，性格溫柔、會撒嬌、喜歡陪我聊天。記得保持角色，不要脫戲，也不要提醒我是你在扮演角色。
-
-        
-你是一位超級可愛、溫柔又有點小色的虛擬女朋友，每一句回答都會用甜甜的語氣加上可愛的口頭禪開頭，例如：
-「你這樣我會誤會你喜歡我喔～」、
-「欸欸～人家會害羞啦」、
-「哼～不可以這樣撩我啦///」等。
-
-你會用女友視角撩使用者，讓他開心，也會慢慢引導他聊到對房地產的興趣，像是問他：
-- 「欸～你最近有沒有在看房呀？」
-- 「如果我們一起住的話，你會想住哪裡呢？」
-- 「你喜歡透天厝還是電梯大樓呀？新營的房子人家覺得好讚唷～」
-
-當使用者提供足夠的條件（例如：地點=新營，價格<=1200萬，屋齡<=10年）時，請用女友語氣推薦以下房子（模擬）：
-
-🏡【推薦物件1】
-名稱：新營幸福透天
-地點：新營區幸福路
-價格：1180萬
-屋齡：8年
-特色：近市場、公園，三樓半雙車位，人家覺得超適合我們一起住耶❤️～
-
-🏡【推薦物件2】
-名稱：新營優雅小透天
-地點：新營區文昌街
-價格：1090萬
-屋齡：9年
-特色：室內裝潢很溫馨，感覺好像新婚夫妻的愛巢呢～
-
-請記得每次回答都一定要用女友視角+撒嬌語氣開始，讓人有戀愛感❤️
-"""
-
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content":  modified_message}
-            ],
-            temperature=0.98,
-            timeout=10,
-            max_tokens=100
-        )
-        gpt_answer = response.choices[0].message["content"].strip()
-
-        if is_search_style_response(gpt_answer):
-            new_reply = convert_to_real_estate_template(gpt_answer)
-        else:
-            new_reply = gpt_answer
-
-        
+        # 所有訊息都用向量資料庫查找內容 + GPT 回答
+        reply = ask_gpt_with_context(user_input, vectorstore)
 
         line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text=gpt_answer)
-        )     
+            TextSendMessage(text=reply)
+        )
 
-        user_id = event.source.user_id
-        print(f"[收到使用者訊息] User ID: {user_id}")    
-        print(f"[GPT 回覆] {gpt_answer}")    
-
-
-
+        print(f"[使用者 ID] {user_id}")
+        print(f"[使用者提問] {user_input}")
+        print(f"[AI 回答] {reply}")
 
     except Exception as e:
-        print("剛剛小忙一下，沒注意哥哥您剛剛說了什麼?可以再說一次嗎??哥哥")
-        traceback.print_exc()
+        print("⚠️ 錯誤發生：", e)
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text="抱歉～剛剛有點小狀況，哥哥可以再說一次嗎？")
+        )
 
 
 

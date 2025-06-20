@@ -11,10 +11,9 @@ from datetime import datetime
 from langchain.vectorstores import FAISS
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.schema import Document 
+from langchain.docstore.document import Document 
 import pdfplumber
-import faiss
-import pickle
+
 
 
 
@@ -37,50 +36,72 @@ line_bot_api = LineBotApi(CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(CHANNEL_SECRET)
 
 
-
 def load_embedding_model():
-    return HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    return HuggingFaceEmbeddings(model_name="shibing624/text2vec-base-chinese")
+
+# === STEP 2: 讀取 PDF 檔 ===
+def load_documents(filepath: str):
+    documents = []
+    with pdfplumber.open(filepath) as pdf:
+        for i, page in enumerate(pdf.pages):
+            text = page.extract_text()
+            if text:
+                documents.append(Document(page_content=text, metadata={"page": i + 1}))
+    return documents
+
+# === STEP 3: 切割文件 ===
+def split_documents(docs):
+    splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+    texts = []
+    for doc in docs:
+        chunks = splitter.split_text(doc.page_content)
+        for chunk in chunks:
+            texts.append(Document(page_content=chunk, metadata=doc.metadata))
+    return texts
+
+# === STEP 4: 建立向量資料庫 ===
+def create_vectorstore(chunks, embedding_model):
+    return FAISS.from_documents(chunks, embedding_model)
 
 
 
-
-
-
-
-# === STEP 5: 問答階段：查詢 FAISS 並餵給 GPT ===
+# 步驟 5：使用者提問 → 相似內容 → 餵給 ChatGPT
 def ask_gpt_with_context(query: str, vectorstore: FAISS) -> str:
+    # 取得最相似的文件內容
     docs = vectorstore.similarity_search(query, k=3)
     context = "\n\n".join([doc.page_content for doc in docs])
-    system_prompt = "你是一位專業知識助理，請根據下列內容回答問題："
-    user_prompt = f"內容：\n{context}\n\n問題：{query}"
-    
+
+    # 建構 ChatGPT 提問內容
+    system_prompt = "你是一個知識豐富的專業助理，根據以下內容回答使用者的問題。"
+    user_prompt = f"以下是相關知識內容：\n\n{context}\n\n使用者問題：{query}"
+
+    # 使用 ChatGPT（OpenAI 0.28.1 方式）
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}
         ],
-        temperature=0.7,
+        temperature=0.98,
         max_tokens=300,
     )
     return response["choices"][0]["message"]["content"].strip()
 
 
-index = faiss.read_index("my_faiss_index/index.faiss")
 
-with open("my_faiss_index/index.pkl", "rb") as f:
-    stored_data = pickle.load(f)
 
 print("🔍 建立向量資料庫...")
 embeddings = load_embedding_model()
-print("📂 目前目錄檔案：", os.listdir())
 
-if os.path.exists("my_faiss_index/index.faiss"):
-    print("📂 目前目錄檔案：", os.listdir())
-    vectorstore = FAISS(embedding_function=embeddings, index=index, docstore=stored_data["docstore"], index_to_docstore_id=stored_data["index_to_docstore_id"])
-    print("📂 目前目錄檔案：", os.listdir())
-else:
-    raise FileNotFoundError("❌ 沒有找到 FAISS 向量資料庫！請先執行 save_local()")
+print("📄 載入知識文件...")
+docs = load_documents("00.pdf")
+
+print("✂️ 分割文件...")
+chunks = split_documents(docs)
+
+print("🔍 建立向量資料庫...")
+embeddings = load_embedding_model()
+vectorstore = create_vectorstore(chunks, embeddings)
 
 app = Flask(__name__)
 

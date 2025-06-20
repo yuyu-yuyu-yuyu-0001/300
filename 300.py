@@ -7,10 +7,7 @@ import traceback
 import os
 import json
 import random 
-import firebase_admin
-from firebase_admin import credentials, firestore
 from datetime import datetime
-from mega import Mega
 from langchain.vectorstores import FAISS
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter

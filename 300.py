@@ -65,7 +65,12 @@ def load_documents(filepath: str):
 # === STEP 3: 切割文件 ===
 def split_documents(docs):
     splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-    return splitter.split_documents(docs)
+    texts = []
+    for doc in docs:
+        chunks = splitter.split_text(doc.page_content)
+        for chunk in chunks:
+            texts.append(Document(page_content=chunk, metadata=doc.metadata))
+    return texts
 
 # === STEP 4: 建立向量資料庫 ===
 def create_vectorstore(chunks, embedding_model):

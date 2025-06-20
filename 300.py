@@ -81,7 +81,7 @@ def ask_gpt_with_context(query: str, vectorstore: FAISS) -> str:
 
 print("🔍 建立向量資料庫...")
 embeddings = load_embedding_model()
-vectorstore = FAISS.load_local("my_faiss_index/index.faiss", embeddings)
+vectorstore = FAISS.load_local("/index.faiss", embeddings)
 
 
 app = Flask(__name__)

@@ -8,12 +8,13 @@ import os
 import json
 import random 
 from datetime import datetime
-from langchain.vectorstores import FAISS
+from langchain.vectorstores.faiss import FAISS
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.docstore.document import Document 
 import pdfplumber
-
+import faiss
+import pickle
 
 
 
@@ -32,6 +33,11 @@ CHANNEL_ACCESS_TOKEN = 'iqYgdqANm0V1UVbC+0jYZqXQNATimJvJRU+esv0RR5TlngqFDmytCT3a
 
 line_bot_api = LineBotApi(CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(CHANNEL_SECRET)
+
+index = faiss.read_index("my_faiss_index/index.faiss")
+
+with open("my_faiss_index/index.pkl", "rb") as f:
+    stored_data = pickle.load(f)
 
 def load_embedding_model():
     return HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
@@ -86,7 +92,7 @@ print("📂 目前目錄檔案：", os.listdir())
 
 if os.path.exists("my_faiss_index/index.faiss"):
     print("📂 目前目錄檔案：", os.listdir())
-    vectorstore = FAISS.load_local("my_faiss_index", embeddings)
+    vectorstore = FAISS(embedding_function=embeddings, index=index, docstore=stored_data["docstore"], index_to_docstore_id=stored_data["index_to_docstore_id"])
     print("📂 目前目錄檔案：", os.listdir())
 else:
     raise FileNotFoundError("❌ 沒有找到 FAISS 向量資料庫！請先執行 save_local()")

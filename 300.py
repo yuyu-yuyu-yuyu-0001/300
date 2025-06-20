@@ -15,7 +15,10 @@ from langchain.docstore.document import Document
 import pdfplumber
 import faiss
 import pickle
+import sys
+import types
 
+sys.modules['langchain.schema.document'] = types.SimpleNamespace()
 
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"

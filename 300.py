@@ -18,20 +18,6 @@ import pdfplumber
 
 
 
-firebase_key_json = os.environ.get("FIREBASE_CREDENTIALS")
-if not firebase_key_json:
-    raise ValueError("❌ 環境變數 'FIREBASE_CREDENTIALS' 沒有設定")
-
-cred_dict = json.loads(firebase_key_json)
-
-
-if not firebase_admin._apps:
-    cred = credentials.Certificate(cred_dict)  # 確保此檔案在你的專案資料夾中
-    firebase_admin.initialize_app(cred)
-    
-db = firestore.client()
-
-
 
 # GPT API Key 設定（openai 0.28.1 寫法）
 openai.api_key = 'sk-kVraVp5JrS0q3DLd1202F329D8C943938cAfDa071f966b29'
@@ -105,75 +91,7 @@ vectorstore = create_vectorstore(chunks, embeddings)
 
 app = Flask(__name__)
 
-MEGA_EMAIL = os.environ.get("MEGA_EMAIL")
-MEGA_PASSWORD = os.environ.get("MEGA_PASSWORD")
 
-def save_user_id(user_id):
-    try:
-        user_ref = db.collection('line_users').document(user_id)
-        if not user_ref.get().exists:
-            user_ref.set({
-                'user_id': user_id,
-                'created_at': firestore.SERVER_TIMESTAMP
-            })
-            print(f"[Firestore] ✅ 已儲存 user_id: {user_id}")
-        else:
-            print(f"[Firestore] ℹ️ user_id 已存在: {user_id}")
-    except Exception as e:
-        print(f"[Firestore ❌ 錯誤] {e}")
-
-def save_to_mega(user_id, user_message, ai_reply):
-    try:
-        mega = Mega()
-        m = mega.login(MEGA_EMAIL, MEGA_PASSWORD)
-
-        filename = f"{user_id}.txt"
-        tmp_dir = os.path.join(os.getcwd(), "A")
-        filepath = os.path.join(tmp_dir, filename)
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        os.makedirs(tmp_dir, exist_ok=True)
-        
-        file_list = m.find(filename)
-
-        # 讀取原檔案內容（如果存在於 MEGA）
-        if file_list:
-            try:
-                download_path = m.download(file_list[0], dest_path=tmp_dir)
-                if not os.path.exists(download_path):
-                    print(f"[MEGA ⚠️] 檔案下載失敗：{download_path}")
-            except Exception as e:
-                print(f"[MEGA ⚠️] 無法下載原始檔案：{e}")
-        else:
-            # 若檔案不存在，建立空檔案
-            with open(filepath, "w", encoding="utf-8") as f:
-                f.write("")
-
-        # 寫入新訊息到本地檔案（追加）
-        with open(filepath, "a", encoding="utf-8") as f:
-            f.write(f"\n===== {timestamp} =====\n")
-            f.write(f"👤 USER_ID: {user_id}\n")
-            f.write(f"🧍 使用者：{user_message}\n")
-            f.write(f"🤖 AI 回覆：{ai_reply}\n")
-
-        # 上傳覆蓋檔案到 MEGA
-        folder = m.find("LINE_對話紀錄")
-        if not folder:
-            folder = m.create_folder("LINE_對話紀錄")
-
-        # 刪除舊檔（避免重複）
-        if file_list:
-            try:
-                m.delete(file_list[0])
-            except Exception as e:
-                print(f"[MEGA ⚠️] 無法刪除原始檔案：{e}")
-
-        m.upload(filepath, folder[0])
-        print(f"[MEGA ✅] 對話已儲存：{filename}")
-        os.remove(filepath)
-
-    except Exception as e:
-        print(f"[MEGA ❌ 錯誤] {e}")
 
 
 

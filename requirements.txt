@@ -10,6 +10,7 @@ mega.py==1.0.8
 langchain==0.0.69
 faiss-cpu
 sentence-transformers==2.2.2
+huggingface_hub==0.14.1
 pdfplumber==0.10.2
 
 

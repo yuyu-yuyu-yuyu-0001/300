@@ -11,8 +11,7 @@ from datetime import datetime
 from langchain.vectorstores import FAISS
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.docstore.document import Document 
-import pdfplumber
+
 
 
 
@@ -37,7 +36,7 @@ handler = WebhookHandler(CHANNEL_SECRET)
 
 
 def load_embedding_model():
-    return HuggingFaceEmbeddings(model_name="shibing624/text2vec-base-multilingual")
+    return HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2"")
 
 # === STEP 2: 讀取 PDF 檔 ===
 def load_documents(filepath: str):
@@ -66,26 +65,7 @@ def create_vectorstore(chunks, embedding_model):
 
 
 # 步驟 5：使用者提問 → 相似內容 → 餵給 ChatGPT
-def ask_gpt_with_context(query: str, vectorstore: FAISS) -> str:
-    # 取得最相似的文件內容
-    docs = vectorstore.similarity_search(query, k=3)
-    context = "\n\n".join([doc.page_content for doc in docs])
 
-    # 建構 ChatGPT 提問內容
-    system_prompt = "你是一個知識豐富的專業助理，根據以下內容回答使用者的問題。"
-    user_prompt = f"以下是相關知識內容：\n\n{context}\n\n使用者問題：{query}"
-
-    # 使用 ChatGPT（OpenAI 0.28.1 方式）
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt}
-        ],
-        temperature=0.98,
-        max_tokens=300,
-    )
-    return response["choices"][0]["message"]["content"].strip()
 
 
 
@@ -93,15 +73,7 @@ def ask_gpt_with_context(query: str, vectorstore: FAISS) -> str:
 print("🔍 建立向量資料庫...")
 embeddings = load_embedding_model()
 
-print("📄 載入知識文件...")
-docs = load_documents("00.pdf")
 
-print("✂️ 分割文件...")
-chunks = split_documents(docs)
-
-print("🔍 建立向量資料庫...")
-embeddings = load_embedding_model()
-vectorstore = create_vectorstore(chunks, embeddings)
 
 app = Flask(__name__)
 

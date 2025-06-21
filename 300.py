@@ -68,10 +68,13 @@ def ask_gpt_with_context(query: str, vectorstore: FAISS) -> str:
     )
     return response["choices"][0]["message"]["content"].strip()
 
-print("🔍 建立向量資料庫...")
-
+print("🔍 載入資料庫...")
 embeddings = load_embedding_model()
+
+print("🔍 讀取 TXT 檔 並切割...")
 docs = load_txt_documents("text.txt")
+
+print("🔍 建立向量資料庫...") 
 vectorstore = FAISS.from_documents(docs, embeddings)
 
 

@@ -122,6 +122,14 @@ def build_vectorstore():
         print("🔐 登入 MEGA 並下載 .txt 檔案...")
         download_txt_from_mega("text.txt")
         print("✅ 下載完成：text.txt")
+
+        # ✅ 這裡加入檢查
+        if not os.path.exists("text.txt"):
+             raise FileNotFoundError("text.txt 不存在")
+        if os.stat("text.txt").st_size == 0:
+            raise ValueError("text.txt 是空的")
+
+        print("📄 讀取並處理 text.txt")
       
         print("🔍 載入資料與建立向量庫...")
         embeddings = load_embedding_model()

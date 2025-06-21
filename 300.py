@@ -44,9 +44,10 @@ def download_txt_from_mega(filename: str):
     files = m.get_files()
 
     for file_id, file_info in files.items():
-        file_name = file_info["a"].get("n")
+        file_name = file_info.get("a", {}).get("n")
         if file_name == filename:
-            m.download(file_info, dest_path=".", dest_filename=filename)
+            # 👇 傳入 tuple (file_id, file_info)
+            m.download((file_id, file_info), dest_path=".", dest_filename=filename)
             print(f"✅ 成功下載：{filename}")
             return
 

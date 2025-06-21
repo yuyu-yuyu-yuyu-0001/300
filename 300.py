@@ -37,18 +37,25 @@ handler = WebhookHandler(CHANNEL_SECRET)
 vectorstore = None
 
 
-def download_txt_from_mega(filename: str):
+def download_txt_from_mega(filename: str): 
     print("🔐 登入 MEGA 並下載 .txt 檔案...")
+
     m = Mega()
     m.login(MEGA_EMAIL, MEGA_PASSWORD)
     files = m.get_files()
 
     for file_id, file in files.items():
-        if file["a"]["n"] == filename:
-            m.download(file, dest_path=".", dest_filename=filename)
-            print(f"✅ 成功下載：{filename}")
-            return
+        try:
+            # 有些檔案可能沒有 "a" 或 "n"，需要用 get 避免錯誤
+            if file.get("a", {}).get("n") == filename:
+                m.download(file, dest_path=".", dest_filename=filename)
+                print(f"✅ 成功下載：{filename}")
+                return
+        except Exception as e:
+            print(f"⚠️ 檢查檔案時發生錯誤：{e}")
+
     raise FileNotFoundError(f"❌ 在 MEGA 找不到檔案：{filename}")
+
 
 
     

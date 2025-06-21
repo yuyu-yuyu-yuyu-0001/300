@@ -108,6 +108,7 @@ def build_vectorstore():
         filename = "text.txt"
         files = m.get_files()
         file_id = None
+
         for file_key, file_info in files.items():
             if file_info["a"]["n"] == filename:
                 file_id = file_key
@@ -116,7 +117,8 @@ def build_vectorstore():
         if file_id is None:
             raise FileNotFoundError(f"找不到檔案：{filename}")
 
-        m.download(files[file_id], dest_path=".")
+        # ✅ 這裡改為 file_id，而非 files[file_id]
+        m.download(file_id, dest_path=".")
         print("✅ 下載完成：text.txt")
       
         print("🔍 載入資料與建立向量庫...")

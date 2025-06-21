@@ -37,7 +37,7 @@ handler = WebhookHandler(CHANNEL_SECRET)
 vectorstore = None
 
 def load_embedding_model():
-    return HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    return HuggingFaceEmbeddings(model_name="sentence-transformers/paraphrase-MiniLM-L3-v2")
 
 # === STEP 2: 讀取 TXT 檔 並切割 ===
 def load_txt_documents(filepath: str):

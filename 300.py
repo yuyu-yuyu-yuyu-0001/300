@@ -38,40 +38,41 @@ handler = WebhookHandler(CHANNEL_SECRET)
 def load_embedding_model():
     return HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
-# === STEP 2: 讀取 PDF 檔 ===
-def load_documents(filepath: str):
-    documents = []
-    with pdfplumber.open(filepath) as pdf:
-        for i, page in enumerate(pdf.pages):
-            text = page.extract_text()
-            if text:
-                documents.append(Document(page_content=text, metadata={"page": i + 1}))
-    return documents
-
-# === STEP 3: 切割文件 ===
-def split_documents(docs):
+# === STEP 2: 讀取 TXT 檔 並切割 ===
+def load_txt_documents(filepath: str):
+    with open(filepath, "r", encoding="utf-8") as f:
+        text = f.read()
     splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-    texts = []
-    for doc in docs:
-        chunks = splitter.split_text(doc.page_content)
-        for chunk in chunks:
-            texts.append(Document(page_content=chunk, metadata=doc.metadata))
-    return texts
+    chunks = splitter.split_text(text)
+    return [Document(page_content=chunk) for chunk in chunks]
 
 # === STEP 4: 建立向量資料庫 ===
 def create_vectorstore(chunks, embedding_model):
     return FAISS.from_documents(chunks, embedding_model)
 
-
-
-# 步驟 5：使用者提問 → 相似內容 → 餵給 ChatGPT
-
-
-
-
+# === STEP 5: 問答階段：查詢 FAISS 並餵給 GPT ===
+def ask_gpt_with_context(query: str, vectorstore: FAISS) -> str:
+    docs = vectorstore.similarity_search(query, k=3)
+    context = "\n\n".join([doc.page_content for doc in docs])
+    system_prompt = "你是一位專業知識助理，請根據下列內容回答問題："
+    user_prompt = f"內容：\n{context}\n\n問題：{query}"
+    
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ],
+        temperature=0.98,
+        max_tokens=300,
+    )
+    return response["choices"][0]["message"]["content"].strip()
 
 print("🔍 建立向量資料庫...")
+
 embeddings = load_embedding_model()
+docs = load_txt_documents("text.txt")
+vectorstore = FAISS.from_documents(docs, embeddings)
 
 
 

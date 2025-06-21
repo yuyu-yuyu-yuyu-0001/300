@@ -12,7 +12,7 @@ from langchain.vectorstores import FAISS
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.docstore.document import Document 
-import pdfplumber
+
 
 
 
@@ -39,25 +39,13 @@ vectorstore = None
 def load_embedding_model():
     return HuggingFaceEmbeddings(model_name="sentence-transformers/paraphrase-MiniLM-L3-v2")
 
-# === STEP 2: 讀取 PDF 檔 ===
-def load_documents(filepath: str):
-    documents = []
-    with pdfplumber.open(filepath) as pdf:
-        for i, page in enumerate(pdf.pages):
-            text = page.extract_text()
-            if text:
-                documents.append(Document(page_content=text, metadata={"page": i + 1}))
-    return documents
-
-# === STEP 3: 切割文件 ===
-def split_documents(docs):
+# === STEP 2: 讀取 TXT 檔 並切割 ===
+def load_txt_documents(filepath: str):
+    with open(filepath, "r", encoding="utf-8") as f:
+        text = f.read()
     splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-    texts = []
-    for doc in docs:
-        chunks = splitter.split_text(doc.page_content)
-        for chunk in chunks:
-            texts.append(Document(page_content=chunk, metadata=doc.metadata))
-    return texts
+    chunks = splitter.split_text(text)
+    return [Document(page_content=chunk) for chunk in chunks]
 
 # === STEP 4: 建立向量資料庫 ===
 def create_vectorstore(chunks, embedding_model):
@@ -111,15 +99,12 @@ def callback():
 def build_vectorstore():
     global vectorstore
     if vectorstore is None:  # 確保只建一次
-       print("📄 載入知識文件...")
-       docs = load_documents("00.pdf")
-
-       print("✂️ 分割文件...")
-       chunks = split_documents(docs)
-
-       print("🔍 建立向量資料庫...")
-       embeddings = load_embedding_model()
-       vectorstore = create_vectorstore(chunks, embeddings)
+        print("🔍 載入資料與建立向量庫...")
+        embeddings = load_embedding_model()
+        print("🔍 讀取 TXT 檔 並切割...")
+        docs = load_txt_documents("text.txt")
+        print("🔍 建立向量資料庫...") 
+        vectorstore = FAISS.from_documents(docs, embeddings)
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
@@ -159,7 +144,6 @@ def handle_message(event):
 if __name__ == "__main__":
     print("[啟動] Flask App 執行中")
     app.run(host="0.0.0.0", port=5000)
-
 
 
 

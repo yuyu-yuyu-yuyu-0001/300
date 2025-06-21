@@ -43,15 +43,13 @@ def download_txt_from_mega(filename: str):
     m.login(MEGA_EMAIL, MEGA_PASSWORD)
     files = m.get_files()
 
-    for file_id, file_info in files.items():
-        file_name = file_info.get("a", {}).get("n")
-        if file_name == filename:
-            # 👇 傳入 tuple (file_id, file_info)
-            m.download((file_id, file_info), dest_path=".", dest_filename=filename)
+    for file_id, file in files.items():
+        if file["a"]["n"] == filename:
+            m.download(file, dest_path=".", dest_filename=filename)
             print(f"✅ 成功下載：{filename}")
             return
-
     raise FileNotFoundError(f"❌ 在 MEGA 找不到檔案：{filename}")
+
 
     
 def load_embedding_model():

@@ -9,6 +9,7 @@ langchain==0.0.69
 faiss-cpu
 sentence-transformers==2.2.2
 huggingface_hub==0.14.1
+mega.py==1.0.8
 
 
 

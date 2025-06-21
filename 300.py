@@ -36,6 +36,24 @@ handler = WebhookHandler(CHANNEL_SECRET)
 
 vectorstore = None
 
+
+def download_txt_from_mega(filename: str):
+    print("🔐 登入 MEGA 並下載 .txt 檔案...")
+    m = Mega()
+    m.login(MEGA_EMAIL, MEGA_PASSWORD)
+    files = m.get_files()
+    for file_id, file_info in files.items():
+        if file_info["a"]["n"] == filename:
+            m._download_file(
+                file_handle=None,
+                file=file_info,
+                dest_path=".",
+                dest_filename=filename
+            )
+            print(f"✅ 下載完成：{filename}")
+            return
+    raise FileNotFoundError(f"❌ 找不到檔案：{filename}")
+    
 def load_embedding_model():
     return HuggingFaceEmbeddings(model_name="sentence-transformers/paraphrase-MiniLM-L3-v2")
 
@@ -102,23 +120,7 @@ def build_vectorstore():
     if vectorstore is None:  # 確保只建一次
         
         print("🔐 登入 MEGA 並下載 .txt 檔案...")
-        mega = Mega()
-        m = mega.login(MEGA_EMAIL, MEGA_PASSWORD)
-
-        filename = "text.txt"
-        files = m.get_files()
-        file_id = None
-
-        for file_key, file_info in files.items():
-            if file_info["a"]["n"] == filename:
-                file_id = file_key
-                break
-
-        if file_id is None:
-            raise FileNotFoundError(f"找不到檔案：{filename}")
-
-        # ✅ 這裡改為 file_id，而非 files[file_id]
-        m.download(file_id, dest_path=".")
+        download_txt_from_mega("text.txt")
         print("✅ 下載完成：text.txt")
       
         print("🔍 載入資料與建立向量庫...")
@@ -127,6 +129,7 @@ def build_vectorstore():
         docs = load_txt_documents("text.txt")
         print("🔍 建立向量資料庫...") 
         vectorstore = FAISS.from_documents(docs, embeddings)
+        print("✅ 向量資料庫建立完成")
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):

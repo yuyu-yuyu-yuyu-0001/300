@@ -42,17 +42,16 @@ def download_txt_from_mega(filename: str):
     m = Mega()
     m.login(MEGA_EMAIL, MEGA_PASSWORD)
     files = m.get_files()
+
     for file_id, file_info in files.items():
-        if file_info["a"]["n"] == filename:
-            m._download_file(
-                file_handle=None,
-                file=file_info,
-                dest_path=".",
-                dest_filename=filename
-            )
-            print(f"✅ 下載完成：{filename}")
+        file_name = file_info["a"].get("n")
+        if file_name == filename:
+            m.download(file_info, dest_path=".", dest_filename=filename)
+            print(f"✅ 成功下載：{filename}")
             return
-    raise FileNotFoundError(f"❌ 找不到檔案：{filename}")
+
+    raise FileNotFoundError(f"❌ 在 MEGA 找不到檔案：{filename}")
+
     
 def load_embedding_model():
     return HuggingFaceEmbeddings(model_name="sentence-transformers/paraphrase-MiniLM-L3-v2")

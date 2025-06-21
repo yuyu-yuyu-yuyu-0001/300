@@ -46,11 +46,13 @@ def download_txt_from_mega(filename: str):
 
     for file_id, file in files.items():
         try:
-            # 有些檔案可能沒有 "a" 或 "n"，需要用 get 避免錯誤
-            if file.get("a", {}).get("n") == filename:
-                m.download(file, dest_path=".", dest_filename=filename)
-                print(f"✅ 成功下載：{filename}")
-                return
+            attrib = file.get("a")
+            if isinstance(attrib, dict):
+                name = attrib.get("n")
+                if name == filename:
+                    m.download(file, dest_path=".", dest_filename=filename)
+                    print(f"✅ 成功下載：{filename}")
+                    return
         except Exception as e:
             print(f"⚠️ 檢查檔案時發生錯誤：{e}")
 

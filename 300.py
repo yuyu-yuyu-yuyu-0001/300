@@ -76,7 +76,8 @@ def ask_gpt_with_context(query: str, vectorstore: FAISS) -> str:
 app = Flask(__name__)
 
 
-
+MEGA_EMAIL = os.environ.get("MEGA_EMAIL")
+MEGA_PASSWORD = os.environ.get("MEGA_PASSWORD")
 
 
 
@@ -99,6 +100,25 @@ def callback():
 def build_vectorstore():
     global vectorstore
     if vectorstore is None:  # 確保只建一次
+        
+        print("🔐 登入 MEGA 並下載 .txt 檔案...")
+        mega = Mega()
+        m = mega.login(MEGA_EMAIL, MEGA_PASSWORD)
+
+        filename = "text.txt"
+        files = m.get_files()
+        file_id = None
+        for file_key, file_info in files.items():
+            if file_info["a"]["n"] == filename:
+                file_id = file_key
+                break
+
+        if file_id is None:
+            raise FileNotFoundError(f"找不到檔案：{filename}")
+
+        m.download(files[file_id], dest_path=".")
+        print("✅ 下載完成：text.txt")
+      
         print("🔍 載入資料與建立向量庫...")
         embeddings = load_embedding_model()
         print("🔍 讀取 TXT 檔 並切割...")

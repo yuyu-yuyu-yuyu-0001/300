@@ -34,6 +34,7 @@ CHANNEL_ACCESS_TOKEN = 'iqYgdqANm0V1UVbC+0jYZqXQNATimJvJRU+esv0RR5TlngqFDmytCT3a
 line_bot_api = LineBotApi(CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(CHANNEL_SECRET)
 
+vectorstore = None
 
 def load_embedding_model():
     return HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
@@ -68,14 +69,7 @@ def ask_gpt_with_context(query: str, vectorstore: FAISS) -> str:
     )
     return response["choices"][0]["message"]["content"].strip()
 
-print("🔍 載入資料庫...")
-embeddings = load_embedding_model()
 
-print("🔍 讀取 TXT 檔 並切割...")
-docs = load_txt_documents("text.txt")
-
-print("🔍 建立向量資料庫...") 
-vectorstore = FAISS.from_documents(docs, embeddings)
 
 
 
@@ -101,12 +95,31 @@ def callback():
 
     return 'OK'
 
+@app.before_first_request
+def build_vectorstore():
+    global vectorstore
+    if vectorstore is None:  # 確保只建一次
+        print("🔍 載入資料與建立向量庫...")
+        embeddings = load_embedding_model()
+        print("🔍 讀取 TXT 檔 並切割...")
+        docs = load_txt_documents("text.txt")
+        print("🔍 建立向量資料庫...") 
+        vectorstore = FAISS.from_documents(docs, embeddings)
+
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
+    global vectorstore
     user_input = event.message.text
     user_id = event.source.user_id
 
-    try:
+    if vectorstore is None:
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text="系統剛啟動，正在載入知識庫，請稍後幾秒再試 🙏")
+        )
+        return
+    
+    try:          
         # 所有訊息都用向量資料庫查找內容 + GPT 回答
         reply = ask_gpt_with_context(user_input, vectorstore)
 
